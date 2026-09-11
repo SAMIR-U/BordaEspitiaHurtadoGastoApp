@@ -1,113 +1,163 @@
-// Registrar Service Worker
+// ==========================================
+// REGISTRO DEL SERVICE WORKER
+// ==========================================
 if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
-        navigator.serviceWorker.register('../sw.js')
-            .then(registration => console.log('SW registrado:', registration))
+        // Detectar si estamos en la raíz o en la carpeta pages
+        const swPath = window.location.pathname.includes('/pages/') ? '../sw.js' : './sw.js';
+        
+        navigator.serviceWorker.register(swPath)
+            .then(registration => console.log('SW registrado con éxito:', registration))
             .catch(error => console.log('Error al registrar SW:', error));
     });
+}
+
+// Utilidad para parseo seguro
+function getSafeLocalStorage(key, defaultValue) {
+    try {
+        const item = localStorage.getItem(key);
+        return item ? JSON.parse(item) : defaultValue;
+    } catch (error) {
+        console.error(`Error al leer ${key}:`, error);
+        return defaultValue;
+    }
 }
 
 document.addEventListener('DOMContentLoaded', () => {
     const path = window.location.pathname;
 
-    // Lógica para el Dashboard
-    if (path.includes('dashboard.html')) {
-        loadDashboard();
-    }
-
-    // Lógica para el Perfil
-    if (path.includes('profile.html')) {
-        loadProfile();
-    }
-
-    // Lógica para el formulario de Presupuesto
-    if (path.includes('budget.html')) {
-        loadBudgetForm();
-    }
+    if (path.includes('dashboard.html')) loadDashboard();
+    if (path.includes('profile.html')) loadProfile();
+    if (path.includes('budget.html')) loadBudgetForm();
 });
 
 // --- LÓGICA DEL DASHBOARD ---
 function loadDashboard() {
-    const expenses = JSON.parse(localStorage.getItem('expenses')) || [];
-    const budget = JSON.parse(localStorage.getItem('budget')) || { general: 0 };
+    const expenses = getSafeLocalStorage('expenses', []);
+    const budget = getSafeLocalStorage('budget', { general: 0 });
+    
+    // Validar que budget.general sea un número
+    const generalBudget = typeof budget.general === 'number' ? budget.general : 0;
 
-    const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
-    const remaining = budget.general - totalExpenses;
+    const totalExpenses = expenses.reduce((sum, exp) => sum + (exp.amount || 0), 0);
+    const remaining = generalBudget - totalExpenses;
 
-    document.getElementById('budget-display').textContent = `$${budget.general.toFixed(2)}`;
-    document.getElementById('total-expenses').textContent = `$${totalExpenses.toFixed(2)}`;
-    document.getElementById('remaining-budget').textContent = `$${remaining.toFixed(2)}`;
+    const budgetDisplay = document.getElementById('budget-display');
+    if (budgetDisplay) budgetDisplay.textContent = `$${generalBudget.toFixed(2)}`;
+    
+    const totalExpensesEl = document.getElementById('total-expenses');
+    if (totalExpensesEl) totalExpensesEl.textContent = `$${totalExpenses.toFixed(2)}`;
+    
+    const remainingEl = document.getElementById('remaining-budget');
+    if (remainingEl) remainingEl.textContent = `$${remaining.toFixed(2)}`;
 
     // Gráfica con Chart.js
-    const ctx = document.getElementById('budgetChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: ['Presupuesto', 'Gasto Real'],
-            datasets: [{
-                label: 'Monto ($)',
-                data: [budget.general, totalExpenses],
-                backgroundColor: ['#1abc9c', '#e74c3c'],
-                borderWidth: 1
-            }]
-        },
-        options: {
-            scales: { y: { beginAtZero: true } },
-            plugins: { legend: { display: false } }
-        }
-    });
+    const chartCanvas = document.getElementById('budgetChart');
+    if (chartCanvas) {
+        const ctx = chartCanvas.getContext('2d');
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['Presupuesto', 'Gasto Real'],
+                datasets: [{
+                    label: 'Monto ($)',
+                    data: [generalBudget, totalExpenses],
+                    backgroundColor: ['#1abc9c', '#e74c3c'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: { y: { beginAtZero: true } },
+                plugins: { legend: { display: false } }
+            }
+        });
+    }
 }
 
 // --- LÓGICA DEL PERFIL ---
 function loadProfile() {
-    const expenses = JSON.parse(localStorage.getItem('expenses')) || [];
-    const budget = JSON.parse(localStorage.getItem('budget')) || { general: 0 };
+    const expenses = getSafeLocalStorage('expenses', []);
+    const budget = getSafeLocalStorage('budget', { general: 0 });
+    const generalBudget = typeof budget.general === 'number' ? budget.general : 0;
 
-    const totalExpenses = expenses.reduce((sum, exp) => sum + exp.amount, 0);
-    const percentage = budget.general > 0 ? ((totalExpenses / budget.general) * 100).toFixed(1) : 0;
-    const remainingPercentage = (100 - percentage).toFixed(1);
+    const totalExpenses = expenses.reduce((sum, exp) => sum + (exp.amount || 0), 0);
+    
+    // Validación para evitar división por cero
+    const percentage = generalBudget > 0 ? ((totalExpenses / generalBudget) * 100).toFixed(1) : 0;
+    const remainingPercentage = Math.max(0, (100 - percentage)).toFixed(1);
 
-    document.getElementById('profile-spent').textContent = `$${totalExpenses.toFixed(2)}`;
-    document.getElementById('profile-percentage').textContent = `${remainingPercentage > 0 ? remainingPercentage : 0}%`;
+    const spentEl = document.getElementById('profile-spent');
+    if (spentEl) spentEl.textContent = `$${totalExpenses.toFixed(2)}`;
+    
+    const percEl = document.getElementById('profile-percentage');
+    if (percEl) percEl.textContent = `${remainingPercentage}%`;
 
     const progressBar = document.getElementById('progress-bar');
-    progressBar.style.width = `${Math.min(percentage, 100)}%`;
-    if (percentage > 100) progressBar.style.backgroundColor = '#e74c3c';
+    if (progressBar) {
+        progressBar.style.width = `${Math.min(percentage, 100)}%`;
+        if (percentage > 100) progressBar.style.backgroundColor = '#e74c3c';
+    }
 
-    // Botón para borrar datos
-    document.getElementById('reset-data').addEventListener('click', () => {
-        if (confirm('¿Estás seguro de borrar todos los datos?')) {
-            localStorage.clear();
-            window.location.href = '../index.html';
-        }
-    });
+    const resetBtn = document.getElementById('reset-data');
+    if (resetBtn) {
+        resetBtn.addEventListener('click', () => {
+            if (confirm('¿Estás seguro de borrar todos los datos?')) {
+                localStorage.clear();
+                window.location.href = '../index.html';
+            }
+        });
+    }
 }
 
 // --- LÓGICA DEL PRESUPUESTO ---
 function loadBudgetForm() {
-    const budget = JSON.parse(localStorage.getItem('budget')) || { general: 0, categories: {} };
+    const budget = getSafeLocalStorage('budget', { general: 0, categories: {} });
 
-    document.getElementById('general-budget').value = budget.general || '';
+    const generalInput = document.getElementById('general-budget');
+    if (generalInput) generalInput.value = budget.general || '';
+
     if (budget.categories) {
-        document.getElementById('cat-comida').value = budget.categories['Comida'] || '';
-        document.getElementById('cat-transporte').value = budget.categories['Transporte'] || '';
-        document.getElementById('cat-ocio').value = budget.categories['Ocio'] || '';
+        const catComida = document.getElementById('cat-comida');
+        const catTransporte = document.getElementById('cat-transporte');
+        const catOcio = document.getElementById('cat-ocio');
+        
+        if (catComida) catComida.value = budget.categories['Comida'] || '';
+        if (catTransporte) catTransporte.value = budget.categories['Transporte'] || '';
+        if (catOcio) catOcio.value = budget.categories['Ocio'] || '';
     }
 
-    document.getElementById('budget-form').addEventListener('submit', (e) => {
-        e.preventDefault();
+    const budgetForm = document.getElementById('budget-form');
+    if (budgetForm) {
+        budgetForm.addEventListener('submit', (e) => {
+            e.preventDefault();
 
-        const newBudget = {
-            general: parseFloat(document.getElementById('general-budget').value) || 0,
-            categories: {
-                'Comida': parseFloat(document.getElementById('cat-comida').value) || 0,
-                'Transporte': parseFloat(document.getElementById('cat-transporte').value) || 0,
-                'Ocio': parseFloat(document.getElementById('cat-ocio').value) || 0
+            // VALIDACIÓN: Leer y comprobar valores numéricos
+            const generalVal = parseFloat(document.getElementById('general-budget').value);
+            const comidaVal = parseFloat(document.getElementById('cat-comida').value) || 0;
+            const transporteVal = parseFloat(document.getElementById('cat-transporte').value) || 0;
+            const ocioVal = parseFloat(document.getElementById('cat-ocio').value) || 0;
+
+            if (isNaN(generalVal) || generalVal <= 0) {
+                alert('El presupuesto general debe ser un número mayor a 0.');
+                return;
             }
-        };
+            if (comidaVal < 0 || transporteVal < 0 || ocioVal < 0) {
+                alert('Los presupuestos por categoría no pueden ser negativos.');
+                return;
+            }
 
-        localStorage.setItem('budget', JSON.stringify(newBudget));
-        alert('Presupuesto guardado correctamente.');
-        window.location.href = 'dashboard.html';
-    });
+            const newBudget = {
+                general: generalVal,
+                categories: {
+                    'Comida': comidaVal,
+                    'Transporte': transporteVal,
+                    'Ocio': ocioVal
+                }
+            };
+
+            localStorage.setItem('budget', JSON.stringify(newBudget));
+            alert('Presupuesto guardado correctamente.');
+            window.location.href = 'dashboard.html';
+        });
+    }
 }
