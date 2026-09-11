@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Perfil</title>
+    <link rel="stylesheet" href="../css/styles.css">
+</head>
+
+<body>
+    <header>
+        <h1>Mi Perfil</h1>
+    </header>
+    <div class="container">
+        <div class="card">
+            <h2>Control de Presupuesto</h2>
+            <p>Has gastado <strong id="profile-spent">$0</strong> de tu presupuesto general.</p>
+            <p>Te queda un <strong id="profile-percentage">100%</strong> del presupuesto.</p>
+            <div style="background: #eee; height: 20px; border-radius: 10px; margin-top: 10px; overflow: hidden;">
+                <div id="progress-bar"
+                    style="height: 100%; width: 0%; background: var(--secondary); transition: width 0.5s;"></div>
+            </div>
+        </div>
+        <div class="card">
+            <h2>Opciones</h2>
+            <button id="reset-data" class="btn btn-danger">Borrar todos los datos</button>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="dashboard.html">📊 Dashboard</a>
+        <a href="expenses.html">💸 Gastos</a>
+        <a href="budget.html">🎯 Presupuesto</a>
+        <a href="profile.html" class="active">👤 Perfil</a>
+    </nav>
+    <script src="../js/app.js"></script>
+</body>
+
+</html>

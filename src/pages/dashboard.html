@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard</title>
+  <link rel="stylesheet" href="../css/styles.css">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <header><h1>Dashboard</h1></header>
+  <div class="container">
+    <div class="card">
+      <h2>Resumen del Mes</h2>
+      <p>Presupuesto General: <span id="budget-display">$0</span></p>
+      <p>Gasto Total: <span id="total-expenses" class="amount">$0</span></p>
+      <p>Restante: <span id="remaining-budget">$0</span></p>
+    </div>
+    <div class="card">
+      <h2>Presupuesto vs Gasto Real</h2>
+      <canvas id="budgetChart"></canvas>
+    </div>
+  </div>
+  
+  <nav class="bottom-nav">
+    <a href="dashboard.html" class="active">📊 Dashboard</a>
+    <a href="expenses.html">💸 Gastos</a>
+    <a href="budget.html">🎯 Presupuesto</a>
+    <a href="profile.html">👤 Perfil</a>
+  </nav>
+  <script src="../js/app.js"></script>
+</body>
+</html>
