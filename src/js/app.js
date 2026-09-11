@@ -120,8 +120,10 @@ function loadBudgetForm() {
         const catComida = document.getElementById('cat-comida');
         const catTransporte = document.getElementById('cat-transporte');
         const catOcio = document.getElementById('cat-ocio');
+        const catOtros = document.getElementById('cat-otros');
         
         if (catComida) catComida.value = budget.categories['Comida'] || '';
+        if (catOtros) catOtros.value = budget.categories['otros'] || '';
         if (catTransporte) catTransporte.value = budget.categories['Transporte'] || '';
         if (catOcio) catOcio.value = budget.categories['Ocio'] || '';
     }
@@ -136,12 +138,13 @@ function loadBudgetForm() {
             const comidaVal = parseFloat(document.getElementById('cat-comida').value) || 0;
             const transporteVal = parseFloat(document.getElementById('cat-transporte').value) || 0;
             const ocioVal = parseFloat(document.getElementById('cat-ocio').value) || 0;
+            const otrosVal = parseFloat(document.getElementById('cat-otros').value) || 0;
 
             if (isNaN(generalVal) || generalVal <= 0) {
                 alert('El presupuesto general debe ser un número mayor a 0.');
                 return;
             }
-            if (comidaVal < 0 || transporteVal < 0 || ocioVal < 0) {
+            if (comidaVal < 0 || transporteVal < 0 || ocioVal < 0 || otrosVal < 0) {
                 alert('Los presupuestos por categoría no pueden ser negativos.');
                 return;
             }
@@ -151,7 +154,8 @@ function loadBudgetForm() {
                 categories: {
                     'Comida': comidaVal,
                     'Transporte': transporteVal,
-                    'Ocio': ocioVal
+                    'Ocio': ocioVal,
+                    'otros': otrosVal
                 }
             };
 
